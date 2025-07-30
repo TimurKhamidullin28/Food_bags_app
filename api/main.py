@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from database import engine, async_get_db
-from models import Base, User, Token, FoodBag
+from models import Base, User, Token, FoodBag, Booking
 from schemas import UserCreateModel, UserOut, FoodBagIn, FoodBagOut, FoodBagUpdate
 import utils
 
@@ -215,7 +215,15 @@ async def book_food_bag(
         FoodBag.id == bag_id)
     )
     food_bag = res_food_bag.scalar()
-    food_bag.available_bags -= 1
-    await session.commit()
+    if food_bag:
+        food_bag.available_bags -= 1
+        new_booking = Booking(user_id=auth_user.id, bag_id=food_bag.id)
+        session.add(new_booking)
+        await session.commit()
 
-    return {"message": f"User {auth_user.name} has booked a Food bag {food_bag.name}"}
+        return {"message": f"User {auth_user.name} has booked a Food bag {food_bag.name}"}
+    else:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Food bag with id {bag_id} not found",
+        )
