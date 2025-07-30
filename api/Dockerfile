@@ -8,4 +8,5 @@ COPY . /api/
 
 WORKDIR /api
 
+CMD ["alembic", "upgrade", "head"]
 CMD ["uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
